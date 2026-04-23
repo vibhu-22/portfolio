@@ -992,10 +992,13 @@ function clearErrors() {
   ['err-name','err-email','err-msg'].forEach(id => setError(id, ''));
 }
 
-function submitForm() {
+async function submitForm() {
   clearErrors();
   const name = document.getElementById('cName').value.trim();
   const email = document.getElementById('cEmail').value.trim();
+  const phone = document.getElementById('cPhone').value.trim();
+  const service = document.getElementById('cService').value;
+  const budget = document.getElementById('cBudget').value;
   const msg = document.getElementById('cMessage').value.trim();
   let valid = true;
 
@@ -1003,11 +1006,31 @@ function submitForm() {
   if (!email) { setError('err-email', 'Email is required.'); valid = false; }
   else if (!/\S+@\S+\.\S+/.test(email)) { setError('err-email', 'Enter a valid email address.'); valid = false; }
   if (!msg) { setError('err-msg', 'Please write a message.'); valid = false; }
-
   if (!valid) return;
 
-  document.getElementById('contactForm').style.display = 'none';
-  document.getElementById('formSuccess').style.display = 'block';
+  const btn = document.querySelector('.form-submit');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('https://formspree.io/f/xeevpnyl', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name, email, phone, service, budget, message: msg })
+    });
+    if (res.ok) {
+      document.getElementById('contactForm').style.display = 'none';
+      document.getElementById('formSuccess').style.display = 'block';
+    } else {
+      btn.textContent = 'Send Message →';
+      btn.disabled = false;
+      setError('err-msg', 'Something went wrong. Please try again.');
+    }
+  } catch (err) {
+    btn.textContent = 'Send Message →';
+    btn.disabled = false;
+    setError('err-msg', 'Network error. Please check your connection and try again.');
+  }
 }
 
 const sections = document.querySelectorAll('section[id]');
